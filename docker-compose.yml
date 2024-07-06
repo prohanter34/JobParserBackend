@@ -1,0 +1,48 @@
+# version: '3.8'
+services:
+    react-nginx-app:
+      stdin_open: true
+      build:
+        context: .
+        dockerfile: ./job_parser_frontend/Dockerfile
+      expose:
+        - 8080
+      ports:
+        - 8080:80
+      depends_on:
+        - fastapi
+      environment:
+        - CHOKIDAR_USEPOLLING=true
+
+    fastapi:
+      build:
+        dockerfile: ./JobParserBackend/Dockerfile
+      depends_on:
+        - postgres
+      command: bash -c 'while !</dev/tcp/postgres/5431; do sleep 1; done; uvicorn src.main:app'
+      ports:
+        - 8000:8000
+      restart: always
+      env_file:
+        - ./JobParserBackend/.env
+
+    postgres:
+      image: postgres:latest
+      shm_size: 400mb
+      build:
+        dockerfile: ./JobParserBackend/src/database/Dockerfile
+      ports:
+        - 5431:5432
+      restart: always
+      environment:
+        - POSTGRES_DB=jobparser
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=${DB_PASSWORD}
+
+
+      # volumes:
+      #   - database.sql:/docker-entrypoint-initdb.d/database.sql
+      #   - .postgres:/var/lib/postgres/data
+
+      # --host 0.0.0.0 --port 8000
+
