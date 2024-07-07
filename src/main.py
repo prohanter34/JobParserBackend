@@ -82,6 +82,8 @@ def auth(user_by_access: dict = Depends(check_access_jwt),
          user_by_refresh: dict = Depends(check_refresh_jwt)):
     if user_by_access:
         user = database.get_user(user_by_access['login'])
+        if not user:
+            return BadResponse(5)
         content = {
             "login": user.login,
             "email": user.email,
